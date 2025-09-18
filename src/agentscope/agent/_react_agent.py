@@ -174,6 +174,7 @@ class ReActAgent(ReActAgentBase):
         # -------------- Memory management --------------
         # Record the dialogue history in the memory
         self.memory = memory or InMemoryMemory()
+        
         # If provide the long-term memory, it will be used to retrieve info
         # in the beginning of each reply, and the result will be added to the
         # system prompt
@@ -195,6 +196,7 @@ class ReActAgent(ReActAgentBase):
         self.toolkit.register_tool_function(
             getattr(self, self.finish_function_name),
         )
+        
         if self._agent_control:
             # Adding two tool functions into the toolkit to allow self-control
             self.toolkit.register_tool_function(
@@ -306,9 +308,29 @@ class ReActAgent(ReActAgentBase):
 
         # The reasoning-acting loop
         reply_msg = None
+        """
+        这段代码实现了ReAct (Reasoning + Acting) 算法的核心循环，其设计思路是：
+            1.迭代式推理：智能体通过多轮推理-行动循环来解决问题
+            2.工具调用支持：支持并行或串行的工具调用
+            3.早期终止机制：一旦获得有效回复就立即退出循环
+            4.容错处理：达到最大迭代次数时提供总结回复
+        """
         for _ in range(self.max_iters):
+            """
+            执行逻辑：
+                1.调用 _reasoning() 方法进行推理
+                2.智能体分析当前对话历史和上下文
+                3.决定下一步行动：是否需要使用工具？使用哪些工具？
+                4.返回包含推理过程和工具调用计划的消息
+            """
             msg_reasoning = await self._reasoning()
-
+            
+            """
+            执行逻辑：
+                1.从推理消息中提取所有 tool_use 类型的块
+                2.为每个工具调用创建异步任务（Future对象）
+                3.使用列表推导式批量创建任务，支持多个工具同时调用
+            """
             futures = [
                 self._acting(tool_call)
                 for tool_call in msg_reasoning.get_content_blocks(
@@ -325,6 +347,14 @@ class ReActAgent(ReActAgentBase):
                 acting_responses = [await _ for _ in futures]
 
             # Find the first non-None replying message from the acting
+            """
+            acting_msg
+            Msg(id='ddkva3wxe2yQrW9crYKPNC', name='星期五', content='既然今天北京是阴天，选择室内运动是一个不错的选择。这里有几个推荐的室内运动项目供您参考：\n\n1. 瑜伽：瑜伽可以帮助提高身体的柔韧性，增强肌肉力量，同时还能帮助放松心情。\n\n2. 健身
+                房锻炼：如果您喜欢更激烈的运动，可以去健身房做一些有氧和无氧运动，比如跑步机、动感单车、举重等。\n\n3. 游泳：如果附近有带温水游泳池的场所，游泳也是个好选择，它能够锻炼全身肌肉且对关节压力小。\n\n4. 室内攀岩：对于寻求挑战的朋友来说，室内攀岩既
+                刺激又能很好地锻炼身体协调性和力量。\n\n5. 乒乓球或羽毛球：这些球类运动既能增进与朋友间的互动交流，也能有效提升心肺功能。\n\n6. 跳绳：简单易行，只需一根跳绳就可以进行高强度间歇训练（HIIT），非常适合在家练习。\n\n7. 舞蹈课程：参加舞蹈班不仅
+                能够学习新技能，而且还是一个很好的有氧运动方式。\n\n8. 桌上足球：如果想要一些轻度的休闲活动，桌上足球是个不错的选择，可以锻炼手眼协调能力。\n\n根据您的兴趣爱好和个人情况挑选适合自己的运动吧！记得在运动前做好热身准备，并保持适当的强度以避免受伤
+                。', role='assistant', metadata=None, timestamp='2025-09-16 08:34:39.638', invocation_id='None')
+            """
             for acting_msg in acting_responses:
                 reply_msg = reply_msg or acting_msg
 
