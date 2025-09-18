@@ -23,8 +23,8 @@ async def main() -> None:
     toolkit.register_tool_function(view_text_file)
 
     agent = ReActAgent(
-        name="Friday",
-        sys_prompt="You are a helpful assistant named Friday.",
+        name="星期五",
+        sys_prompt="你是一个乐于助人的助手，你叫星期五",
         model=DashScopeChatModel(
             api_key=os.environ.get("DASHSCOPE_API_KEY"),
             model_name="qwen-max",
@@ -39,10 +39,13 @@ async def main() -> None:
 
     msg = None
     while True:
+        msg = "帮我查一下明天北京的天气，然后推荐一个合适的户外活动。"
         msg = await user(msg)
+        print(msg)
         if msg.get_text_content() == "exit":
             break
         msg = await agent(msg)
+        break
 
 
 asyncio.run(main())
