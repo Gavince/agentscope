@@ -125,18 +125,22 @@ Welcome to join our community on
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## 📑 Table of Contents
 
+- [✨ Why AgentScope?](#-why-agentscope)
+- [📢 News](#-news)
+- [💬 Contact](#-contact)
+- [📑 Table of Contents](#-table-of-contents)
 - [🚀 Quickstart](#-quickstart)
   - [💻 Installation](#-installation)
-    - [🛠️ From source](#-from-source)
+    - [🛠️ From source](#️-from-source)
     - [📦 From PyPi](#-from-pypi)
 - [📝 Example](#-example)
   - [👋 Hello AgentScope!](#-hello-agentscope)
   - [🎯 Realtime Steering](#-realtime-steering)
-  - [🛠️ Fine-Grained MCP Control](#-fine-grained-mcp-control)
+  - [🛠️ Fine-Grained MCP Control](#️-fine-grained-mcp-control)
   - [🧑‍🤝‍🧑 Multi-Agent Conversation](#-multi-agent-conversation)
   - [💻 AgentScope Studio](#-agentscope-studio)
 - [📖 Documentation](#-documentation)
-- [⚖️ License](#-license)
+- [⚖️ License](#️-license)
 - [📚 Publications](#-publications)
 - [✨ Contributors](#-contributors)
 
@@ -373,7 +377,15 @@ as_studio
     - [Multi-agent Concurrent](https://github.com/agentscope-ai/agentscope/tree/main/examples/workflows/multiagent_concurrent)
   - Evaluation
     - [ACEBench](https://github.com/agentscope-ai/agentscope/tree/main/examples/evaluation/ace_bench)
-
+  - Functional
+    - [ReAct Agent](https://github.com/agentscope-ai/agentscope/tree/main/examples/react_agent)
+    - [MCP](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/mcp)
+    - [Plan](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/plan)
+    - [Structured Output](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/structured_output)
+    - [RAG](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/rag)
+    - [Long-Term Memory](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/long_term_memory)
+    - [Session with SQLite](https://github.com/agentscope-ai/agentscope/tree/main/examples/functionality/session_with_sqlite)
+    - [Voice Agent](https://github.com/agentscope-ai/agentscope/tree/main/examples/agent/voice_agent)
 
 ## ⚖️ License
 
