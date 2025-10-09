@@ -29,6 +29,15 @@ else
     fi
 
     echo ">>> 推送最新的 main 到自己仓库..."
+    # 先尝试拉取远程更改，避免推送冲突
+    if ! git pull origin main; then
+        echo "!!! 无法拉取远程更改，可能存在冲突。"
+        echo "    请手动解决冲突后执行："
+        echo "    git add <冲突文件> && git commit"
+        echo "    然后重新运行此脚本。"
+        exit 1
+    fi
+    # 再次推送
     git push origin main
 fi
 
