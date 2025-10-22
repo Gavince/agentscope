@@ -131,7 +131,12 @@ Welcome to join our community on
 - [📑 Table of Contents](#-table-of-contents)
 - [🚀 Quickstart](#-quickstart)
   - [💻 Installation](#-installation)
+<<<<<<< HEAD
     - [🛠️ From source](#️-from-source)
+=======
+    - [🛠️ From source](#-from-source)
+    - [🔄 Using uv (recommended for faster installs)](#-using-uv-recommended-for-faster-installs)
+>>>>>>> 1f1946d7783e237af2797f7e9155ae8b136d27a5
     - [📦 From PyPi](#-from-pypi)
 - [📝 Example](#-example)
   - [👋 Hello AgentScope!](#-hello-agentscope)
@@ -163,10 +168,29 @@ cd agentscope
 pip install -e .
 ```
 
+#### 🔄 Using uv (recommended for faster installs)
+
+[uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver, written in Rust.
+
+```bash
+# Clone the repository
+git clone -b main https://github.com/agentscope-ai/agentscope.git
+cd agentscope
+
+# Install with uv
+uv pip install -e .
+```
+
 #### 📦 From PyPi
 
 ```bash
 pip install agentscope
+```
+
+Or with uv:
+
+```bash
+uv pip install agentscope
 ```
 
 ## 📝 Example
