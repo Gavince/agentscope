@@ -48,7 +48,7 @@ class Msg:
                 The related API invocation id, if any. This is useful for
                 tracking the message in the context of an API call.
         """
-
+        # 历史消息记录的留存信息
         self.name = name
 
         assert isinstance(

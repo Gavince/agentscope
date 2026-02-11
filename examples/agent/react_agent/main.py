@@ -22,7 +22,7 @@ async def main() -> None:
     toolkit.register_tool_function(execute_shell_command)
     toolkit.register_tool_function(execute_python_code)
     toolkit.register_tool_function(view_text_file)
-
+    # 一个agent需要一个模型，一个toolkit，一个memory
     agent = ReActAgent(
         name="Friday",
         sys_prompt="You are a helpful assistant named Friday.",
