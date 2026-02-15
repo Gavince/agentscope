@@ -210,6 +210,13 @@ class DashScopeChatModel(ChatModelBase):
         """
         import dashscope
 
+        # For qvq and qwen-vl models, content cannot be None / [{"text": None}]
+        # in DashScope API. Convert these values to [] for compatibility.
+        if self.model_name.startswith("qvq") or "-vl" in self.model_name:
+            for msg in messages:
+                content = msg.get("content")
+                if content is None or content == [{"text": None}]:
+                    msg["content"] = []
         kwargs = {
             "messages": messages,
             "model": self.model_name,
@@ -221,10 +228,10 @@ class DashScopeChatModel(ChatModelBase):
             # `self.stream` is True
             "incremental_output": self.stream,
         }
-
+        # 如果提供了tools，则将tools格式化后传递给DashScope API。
         if tools:
             kwargs["tools"] = self._format_tools_json_schemas(tools)
-
+        # 如果提供了tool_choice，则将tool_choice格式化后传递给DashScope API。
         if tool_choice:
             # Handle deprecated "any" option with warning
             if tool_choice in ["any", "required"]:

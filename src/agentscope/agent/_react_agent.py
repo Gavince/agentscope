@@ -2,7 +2,7 @@
 # TODO: simplify the ReActAgent class
 # pylint: disable=not-an-iterable, too-many-lines
 # mypy: disable-error-code="list-item"
-"""ReAct agent class in agentscope."""
+"""agentscope 中的 ReAct agent 类"""
 import asyncio
 from enum import Enum
 from typing import Type, Any, AsyncGenerator, Literal
@@ -31,11 +31,11 @@ from ..tts import TTSModelBase
 
 
 class _QueryRewriteModel(BaseModel):
-    """The structured model used for query rewriting."""
+    """用于查询重写的结构化模型"""
 
     rewritten_query: str = Field(
         description=(
-            "The rewritten query, which should be specific and concise. "
+            "重写后的查询，应该具体且简洁"
         ),
     )
 
@@ -96,12 +96,12 @@ class _MemoryMark(str, Enum):
 
 
 class ReActAgent(ReActAgentBase):
-    """A ReAct agent implementation in AgentScope, which supports
+    """AgentScope 中的 ReAct agent 实现，支持以下特性：
 
-    - Realtime steering
-    - API-based (parallel) tool calling
-    - Hooks around reasoning, acting, reply, observe and print functions
-    - Structured output generation
+    - 实时引导
+    - 基于 API 的（并行）工具调用
+    - 在推理、行动、回复、观察和打印函数周围的钩子
+    - 结构化输出生成
     """
 
     class CompressionConfig(BaseModel):
@@ -171,8 +171,7 @@ class ReActAgent(ReActAgentBase):
         be provided."""
 
     finish_function_name: str = "generate_response"
-    """The name of the function used to generate structured output. Only
-    registered when structured output model is provided in the reply call."""
+    """用于生成结构化输出的函数名称。仅在 reply 调用中提供结构化输出模型时注册"""
 
     def __init__(
         self,
@@ -198,67 +197,50 @@ class ReActAgent(ReActAgentBase):
         tts_model: TTSModelBase | None = None,
         compression_config: CompressionConfig | None = None,
     ) -> None:
-        """Initialize the ReAct agent
+        """初始化 ReAct agent
 
         Args:
             name (`str`):
-                The name of the agent.
+                agent 的名称
             sys_prompt (`str`):
-                The system prompt of the agent.
+                agent 的系统提示词
             model (`ChatModelBase`):
-                The chat model used by the agent.
+                agent 使用的聊天模型
             formatter (`FormatterBase`):
-                The formatter used to format the messages into the required
-                format of the model API provider.
+                用于将消息格式化为模型 API 提供商所需格式的格式化器
             toolkit (`Toolkit | None`, optional):
-                A `Toolkit` object that contains the tool functions. If not
-                provided, a default empty `Toolkit` will be created.
+                包含工具函数的 `Toolkit` 对象。如果未提供，将创建一个默认的空 `Toolkit`
             memory (`MemoryBase | None`, optional):
-                The memory used to store the dialogue history. If not provided,
-                a default `InMemoryMemory` will be created, which stores
-                messages in a list in memory.
+                用于存储对话历史的记忆。如果未提供，将创建一个默认的 `InMemoryMemory`，
+                它在内存中的列表中存储消息
             long_term_memory (`LongTermMemoryBase | None`, optional):
-                The optional long-term memory, which will provide two tool
-                functions: `retrieve_from_memory` and `record_to_memory`, and
-                will attach the retrieved information to the system prompt
-                before each reply.
+                可选的长期记忆，它将提供两个工具函数：`retrieve_from_memory` 和 `record_to_memory`，
+                并在每次回复之前将检索到的信息附加到系统提示词中
             enable_meta_tool (`bool`, defaults to `False`):
-                If `True`, a meta tool function `reset_equipped_tools` will be
-                added to the toolkit, which allows the agent to manage its
-                equipped tools dynamically.
+                如果为 `True`，将向工具包添加一个元工具函数 `reset_equipped_tools`，
+                允许 agent 动态管理其装备的工具
             long_term_memory_mode (`Literal['agent_control', 'static_control',\
               'both']`, defaults to `both`):
-                The mode of the long-term memory. If `agent_control`, two
-                tool functions `retrieve_from_memory` and `record_to_memory`
-                will be registered in the toolkit to allow the agent to
-                manage the long-term memory. If `static_control`, retrieving
-                and recording will happen in the beginning and end of
-                each reply respectively.
+                长期记忆的模式。如果为 `agent_control`，将在工具包中注册两个工具函数
+                `retrieve_from_memory` 和 `record_to_memory`，允许 agent 管理长期记忆。
+                如果为 `static_control`，检索和记录将分别在每次回复的开始和结束时发生
             parallel_tool_calls (`bool`, defaults to `False`):
-                When LLM generates multiple tool calls, whether to execute
-                them in parallel.
+                当 LLM 生成多个工具调用时，是否并行执行它们
             knowledge (`KnowledgeBase | list[KnowledgeBase] | None`, optional):
-                The knowledge object(s) used by the agent to retrieve
-                relevant documents at the beginning of each reply.
+                agent 用于在每次回复开始时检索相关文档的知识对象
             enable_rewrite_query (`bool`, defaults to `True`):
-                Whether ask the agent to rewrite the user input query before
-                retrieving from the knowledge base(s), e.g. rewrite "Who am I"
-                to "{user's name}" to get more relevant documents. Only works
-                when the knowledge base(s) is provided.
+                是否在从知识库检索之前要求 agent 重写用户输入查询，
+                例如将 "我是谁" 重写为 "{用户名}" 以获得更相关的文档。
+                仅在提供知识库时有效
             plan_notebook (`PlanNotebook | None`, optional):
-                The plan notebook instance, allow the agent to finish the
-                complex task by decomposing it into a sequence of subtasks.
+                计划笔记本实例，允许 agent 通过将复杂任务分解为一系列子任务来完成
             print_hint_msg (`bool`, defaults to `False`):
-                Whether to print the hint messages, including the reasoning
-                hint from the plan notebook, the retrieved information from
-                the long-term memory and knowledge base(s).
+                是否打印提示消息，包括来自计划笔记本的推理提示、
+                从长期记忆和知识库检索到的信息
             max_iters (`int`, defaults to `10`):
-                The maximum number of iterations of the reasoning-acting loops.
+                推理-行动循环的最大迭代次数
             tts_model (`TTSModelBase | None` optional):
                 The TTS model used by the agent.
-            compression_config (`CompressionConfig | None`, optional):
-                The compression configuration. If provided, the auto
-                compression will be activated.
         """
         super().__init__()
 
@@ -268,7 +250,7 @@ class ReActAgent(ReActAgentBase):
             "both",
         ]
 
-        # Static variables in the agent
+        # agent 中的静态变量
         self.name = name
         self._sys_prompt = sys_prompt
         self.max_iters = max_iters
@@ -277,15 +259,14 @@ class ReActAgent(ReActAgentBase):
         self.tts_model = tts_model
         self.compression_config = compression_config
 
-        # -------------- Memory management --------------
-        # Record the dialogue history in the memory
+        # -------------- 记忆管理 --------------
+        # 在记忆中记录对话历史
         self.memory = memory or InMemoryMemory()
-        # If provide the long-term memory, it will be used to retrieve info
-        # in the beginning of each reply, and the result will be added to the
-        # system prompt
+        # 如果提供了长期记忆，它将用于在每次回复开始时检索信息，
+        # 并将结果添加到系统提示词中
         self.long_term_memory = long_term_memory
 
-        # The long-term memory mode
+        # 长期记忆模式
         self._static_control = long_term_memory and long_term_memory_mode in [
             "static_control",
             "both",
@@ -295,18 +276,18 @@ class ReActAgent(ReActAgentBase):
             "both",
         ]
 
-        # -------------- Tool management --------------
-        # If None, a default Toolkit will be created
+        # -------------- 工具管理 --------------
+        # 如果为 None，将创建一个默认的 Toolkit
         self.toolkit = toolkit or Toolkit()
         if self._agent_control:
-            # Adding two tool functions into the toolkit to allow self-control
+            # 向工具包添加两个工具函数以允许自我控制
             self.toolkit.register_tool_function(
                 long_term_memory.record_to_memory,
             )
             self.toolkit.register_tool_function(
                 long_term_memory.retrieve_from_memory,
             )
-        # Add a meta tool function to allow agent-controlled tool management
+        # 添加元工具函数以允许 agent 控制的工具管理
         if enable_meta_tool:
             self.toolkit.register_tool_function(
                 self.toolkit.reset_equipped_tools,
@@ -314,23 +295,21 @@ class ReActAgent(ReActAgentBase):
 
         self.parallel_tool_calls = parallel_tool_calls
 
-        # -------------- RAG management --------------
-        # The knowledge base(s) used by the agent
+        # -------------- RAG 管理 --------------
+        # agent 使用的知识库
         if isinstance(knowledge, KnowledgeBase):
             knowledge = [knowledge]
         self.knowledge: list[KnowledgeBase] = knowledge or []
         self.enable_rewrite_query = enable_rewrite_query
 
-        # -------------- Plan management --------------
-        # Equipped the plan-related tools provided by the plan notebook as
-        # a tool group named "plan_related". So that the agent can activate
-        # the plan tools by the meta tool function
+        # -------------- 计划管理 --------------
+        # 将计划笔记本提供的计划相关工具作为名为 "plan_related" 的工具组装备。
+        # 这样 agent 就可以通过元工具函数激活计划工具
         self.plan_notebook = None
         if plan_notebook:
             self.plan_notebook = plan_notebook
-            # When enable_meta_tool is True, plan tools are in plan_related
-            # group and active by agent.
-            # Otherwise, plan tools in basic group and always active.
+            # 当 enable_meta_tool 为 True 时，计划工具在 plan_related 组中，
+            # 由 agent 激活。否则，计划工具在 basic 组中并始终激活
             if enable_meta_tool:
                 self.toolkit.create_tool_group(
                     "plan_related",
@@ -347,25 +326,31 @@ class ReActAgent(ReActAgentBase):
                         tool,
                     )
 
-        # If print the reasoning hint messages
+        # 是否打印推理提示消息
         self.print_hint_msg = print_hint_msg
 
-        # The maximum number of iterations of the reasoning-acting loops
+        # 推理-行动循环的最大迭代次数
         self.max_iters = max_iters
 
-        # Variables to record the intermediate state
+        # The hint messages that will be attached to the prompt to guide the
+        # agent's behavior before each reasoning step, and cleared after
+        # each reasoning step, meaning the hint messages is one-time use only.
+        # We use an InMemoryMemory instance to store the hint messages
+        self._reasoning_hint_msgs = InMemoryMemory()
 
-        # If required structured output model is provided
+        # 记录中间状态的变量
+
+        # 如果提供了所需的结构化输出模型
         self._required_structured_model: Type[BaseModel] | None = None
 
-        # -------------- State registration and hooks --------------
-        # Register the status variables
+        # -------------- 状态注册和钩子 --------------
+        # 注册状态变量
         self.register_state("name")
         self.register_state("_sys_prompt")
 
     @property
     def sys_prompt(self) -> str:
-        """The dynamic system prompt of the agent."""
+        """agent 的动态系统提示词"""
         agent_skill_prompt = self.toolkit.get_agent_skill_prompt()
         if agent_skill_prompt:
             return self._sys_prompt + "\n\n" + agent_skill_prompt
@@ -378,94 +363,88 @@ class ReActAgent(ReActAgentBase):
         msg: Msg | list[Msg] | None = None,
         structured_model: Type[BaseModel] | None = None,
     ) -> Msg:
-        """Generate a reply based on the current state and input arguments.
+        """基于当前状态和输入参数生成回复
 
         Args:
             msg (`Msg | list[Msg] | None`, optional):
-                The input message(s) to the agent.
+                输入给 agent 的消息
             structured_model (`Type[BaseModel] | None`, optional):
-                The required structured output model. If provided, the agent
-                is expected to generate structured output in the `metadata`
-                field of the output message.
+                所需的结构化输出模型。如果提供，agent 将在输出消息的
+                `metadata` 字段中生成结构化输出
 
         Returns:
             `Msg`:
-                The output message generated by the agent.
+                agent 生成的输出消息
         """
-        # Record the input message(s) in the memory
+        # 在记忆中记录输入消息
         await self.memory.add(msg)
 
-        # -------------- Retrieval process --------------
-        # Retrieve relevant records from the long-term memory if activated
+        # -------------- 检索过程 --------------
+        # 如果激活，从长期记忆中检索相关记录
         await self._retrieve_from_long_term_memory(msg)
-        # Retrieve relevant documents from the knowledge base(s) if any
+        # 如果有，从知识库中检索相关文档
         await self._retrieve_from_knowledge(msg)
 
-        # Control if LLM generates tool calls in each reasoning step
+        # 控制 LLM 在每个推理步骤中是否生成工具调用
         tool_choice: Literal["auto", "none", "required"] | None = None
 
-        # -------------- Structured output management --------------
+        # -------------- 结构化输出管理 --------------
         self._required_structured_model = structured_model
-        # Record structured output model if provided
+        # 如果提供，记录结构化输出模型
         if structured_model:
-            # Register generate_response tool only when structured output
-            # is required
+            # 仅在需要结构化输出时注册 generate_response 工具
             if self.finish_function_name not in self.toolkit.tools:
                 self.toolkit.register_tool_function(
                     getattr(self, self.finish_function_name),
                 )
 
-            # Set the structured output model
+            # 设置结构化输出模型
             self.toolkit.set_extended_model(
                 self.finish_function_name,
                 structured_model,
             )
             tool_choice = "required"
         else:
-            # Remove generate_response tool if no structured output is required
+            # 如果不需要结构化输出，移除 generate_response 工具
             self.toolkit.remove_tool_function(self.finish_function_name)
 
-        # -------------- The reasoning-acting loop --------------
-        # Cache the structured output generated in the finish function call
+        # -------------- 推理-行动循环 --------------
+        # 缓存在 finish 函数调用中生成的结构化输出
         structured_output = None
         reply_msg = None
         for _ in range(self.max_iters):
-            # -------------- Memory compression --------------
-            await self._compress_memory_if_needed()
-
             # -------------- The reasoning process --------------
             msg_reasoning = await self._reasoning(tool_choice)
 
-            # -------------- The acting process --------------
+            # -------------- 行动过程 --------------
             futures = [
                 self._acting(tool_call)
                 for tool_call in msg_reasoning.get_content_blocks(
                     "tool_use",
                 )
             ]
-            # Parallel tool calls or not
+            # 是否并行调用工具
             if self.parallel_tool_calls:
                 structured_outputs = await asyncio.gather(*futures)
             else:
-                # Sequential tool calls
+                # 顺序调用工具
                 structured_outputs = [await _ for _ in futures]
 
-            # -------------- Check for exit condition --------------
-            # If structured output is still not satisfied
+            # -------------- 检查退出条件 --------------
+            # 如果结构化输出仍未满足
             if self._required_structured_model:
-                # Remove None results
+                # 移除 None 结果
                 structured_outputs = [_ for _ in structured_outputs if _]
 
                 msg_hint = None
-                # If the acting step generates structured outputs
+                # 如果行动步骤生成了结构化输出
                 if structured_outputs:
-                    # Cache the structured output data
+                    # 缓存结构化输出数据
                     structured_output = structured_outputs[-1]
 
-                    # Prepare textual response
+                    # 准备文本响应
                     if msg_reasoning.has_content_blocks("text"):
-                        # Re-use the existing text response if any to avoid
-                        # duplicate text generation
+                        # 如果有现有的文本响应，重用它以避免重复的文本生成
                         reply_msg = Msg(
                             self.name,
                             msg_reasoning.get_content_blocks("text"),
@@ -474,11 +453,10 @@ class ReActAgent(ReActAgentBase):
                         )
                         break
 
-                    # Generate a textual response in the next iteration
+                    # 在下一次迭代中生成文本响应
                     msg_hint = Msg(
                         "user",
-                        "<system-hint>Now generate a text "
-                        "response based on your current situation"
+                        "<system-hint>现在根据当前情况生成文本响应"
                         "</system-hint>",
                         "user",
                     )
@@ -487,23 +465,23 @@ class ReActAgent(ReActAgentBase):
                         marks=_MemoryMark.HINT,
                     )
 
-                    # Just generate text response in the next reasoning step
+                    # 在下一个推理步骤中只生成文本响应
                     tool_choice = "none"
-                    # The structured output is generated successfully
+                    # 结构化输出已成功生成
                     self._required_structured_model = None
 
                 elif not msg_reasoning.has_content_blocks("tool_use"):
-                    # If structured output is required but no tool call is
-                    # made, remind the llm to go on the task
+                    # 如果需要结构化输出但没有进行工具调用，
+                    # 提醒 llm 继续任务
                     msg_hint = Msg(
                         "user",
-                        "<system-hint>Structured output is "
-                        f"required, go on to finish your task or call "
-                        f"'{self.finish_function_name}' to generate the "
-                        f"required structured output.</system-hint>",
+                        "<system-hint>需要结构化输出，"
+                        f"继续完成任务或调用 "
+                        f"'{self.finish_function_name}' 来生成所需的结构化输出。"
+                        "</system-hint>",
                         "user",
                     )
-                    await self.memory.add(msg_hint, marks=_MemoryMark.HINT)
+                    await self._reasoning_hint_msgs.add(msg_hint)
                     # Require tool call in the next reasoning step
                     tool_choice = "required"
 
@@ -511,20 +489,18 @@ class ReActAgent(ReActAgentBase):
                     await self.print(msg_hint)
 
             elif not msg_reasoning.has_content_blocks("tool_use"):
-                # Exit the loop when no structured output is required (or
-                # already satisfied) and only text response is generated
+                # 当不需要结构化输出（或已满足）且仅生成文本响应时退出循环
                 msg_reasoning.metadata = structured_output
                 reply_msg = msg_reasoning
                 break
 
-        # When the maximum iterations are reached
-        # and no reply message is generated
+        # 当达到最大迭代次数且没有生成回复消息时
         if reply_msg is None:
             reply_msg = await self._summarizing()
             reply_msg.metadata = structured_output
             await self.memory.add(reply_msg)
 
-        # Post-process the memory, long-term memory
+        # 后处理记忆、长期记忆
         if self._static_control:
             await self.long_term_memory.record(
                 [
@@ -541,29 +517,29 @@ class ReActAgent(ReActAgentBase):
         self,
         tool_choice: Literal["auto", "none", "required"] | None = None,
     ) -> Msg:
-        """Perform the reasoning process."""
+        """执行推理过程"""
 
         if self.plan_notebook:
-            # Insert the reasoning hint from the plan notebook
+            # 从计划笔记本插入推理提示
             hint_msg = await self.plan_notebook.get_current_hint()
             if self.print_hint_msg and hint_msg:
                 await self.print(hint_msg)
             await self.memory.add(hint_msg, marks=_MemoryMark.HINT)
 
-        # Convert Msg objects into the required format of the model API
+        # 将 Msg 对象转换为模型 API 所需的格式
+        # 这里调用的是 formatter.format 异步方法，它是格式化消息列表的方法，
+        # 必须由子类实现（FormatterBase 定义为 abstractmethod）。
+        # 该方法需要返回格式化后的 prompt，用于后续模型调用。此处接收其返回值 prompt。
         prompt = await self.formatter.format(
             msgs=[
                 Msg("system", self.sys_prompt, "system"),
-                *await self.memory.get_memory(
-                    exclude_mark=_MemoryMark.COMPRESSED
-                    if self.compression_config
-                    and self.compression_config.enable
-                    else None,
-                ),
+                *await self.memory.get_memory(),
+                # The hint messages to guide the agent's behavior, maybe empty
+                *await self._reasoning_hint_msgs.get_memory(),
             ],
         )
         # Clear the hint messages after use
-        await self.memory.delete_by_mark(mark=_MemoryMark.HINT)
+        await self._reasoning_hint_msgs.clear()
 
         res = await self.model(
             prompt,
@@ -571,11 +547,11 @@ class ReActAgent(ReActAgentBase):
             tool_choice=tool_choice,
         )
 
-        # handle output from the model
+        # 处理模型的输出
         interrupted_by_user = False
         msg = None
 
-        # TTS model context manager
+        # TTS 模型上下文管理器
         tts_context = self.tts_model or _AsyncNullContext()
         speech: AudioBlock | list[AudioBlock] | None = None
 
@@ -586,11 +562,11 @@ class ReActAgent(ReActAgentBase):
                     async for content_chunk in res:
                         msg.content = content_chunk.content
 
-                        # The speech generated from multimodal (audio) models
-                        # e.g. Qwen-Omni and GPT-AUDIO
+                        # 从多模态（音频）模型生成的语音
+                        # 例如 Qwen-Omni 和 GPT-AUDIO
                         speech = msg.get_content_blocks("audio") or None
 
-                        # Push to TTS model if available
+                        # 如果可用，推送到 TTS 模型
                         if (
                             self.tts_model
                             and self.tts_model.supports_streaming_input
@@ -604,8 +580,7 @@ class ReActAgent(ReActAgentBase):
                     msg.content = list(res.content)
 
                 if self.tts_model:
-                    # Push to TTS model and block to receive the full speech
-                    # synthesis result
+                    # 推送到 TTS 模型并阻塞以接收完整的语音合成结果
                     tts_res = await self.tts_model.synthesize(msg)
                     if self.tts_model.stream:
                         async for tts_chunk in tts_res:
@@ -616,8 +591,7 @@ class ReActAgent(ReActAgentBase):
 
                 await self.print(msg, True, speech=speech)
 
-                # Add a tiny sleep to yield the last message object in the
-                # message queue
+                # 添加微小的延时以让出消息队列中的最后一个消息对象
                 await asyncio.sleep(0.001)
 
         except asyncio.CancelledError as e:
@@ -625,12 +599,12 @@ class ReActAgent(ReActAgentBase):
             raise e from None
 
         finally:
-            # None will be ignored by the memory
+            # None 将被记忆忽略
             await self.memory.add(msg)
 
-            # Post-process for user interruption
+            # 用户中断的后处理
             if interrupted_by_user and msg:
-                # Fake tool results
+                # 伪造工具结果
                 tool_use_blocks: list = msg.get_content_blocks(
                     "tool_use",
                 )
@@ -642,8 +616,7 @@ class ReActAgent(ReActAgentBase):
                                 type="tool_result",
                                 id=tool_call["id"],
                                 name=tool_call["name"],
-                                output="The tool call has been interrupted "
-                                "by the user.",
+                                output="工具调用已被用户中断",
                             ),
                         ],
                         "system",
@@ -653,17 +626,15 @@ class ReActAgent(ReActAgentBase):
         return msg
 
     async def _acting(self, tool_call: ToolUseBlock) -> dict | None:
-        """Perform the acting process, and return the structured output if
-        it's generated and verified in the finish function call.
+        """执行行动过程，如果在 finish 函数调用中生成并验证了结构化输出，则返回它
 
         Args:
             tool_call (`ToolUseBlock`):
-                The tool use block to be executed.
+                要执行的工具使用块
 
         Returns:
             `Union[dict, None]`:
-                Return the structured output if it's verified in the finish
-                function call, otherwise return None.
+                如果在 finish 函数调用中验证了结构化输出，则返回它，否则返回 None
         """
 
         tool_res_msg = Msg(
@@ -679,60 +650,56 @@ class ReActAgent(ReActAgentBase):
             "system",
         )
         try:
-            # Execute the tool call
+            # 执行工具调用
             tool_res = await self.toolkit.call_tool_function(tool_call)
 
-            # Async generator handling
+            # 异步生成器处理
             async for chunk in tool_res:
-                # Turn into a tool result block
+                # 转换为工具结果块
                 tool_res_msg.content[0][  # type: ignore[index]
                     "output"
                 ] = chunk.content
 
                 await self.print(tool_res_msg, chunk.is_last)
 
-                # Raise the CancelledError to handle the interruption in the
-                # handle_interrupt function
+                # 抛出 CancelledError 以在 handle_interrupt 函数中处理中断
                 if chunk.is_interrupted:
                     raise asyncio.CancelledError()
 
-                # Return message if generate_response is called successfully
+                # 如果成功调用 generate_response，则返回消息
                 if (
                     tool_call["name"] == self.finish_function_name
                     and chunk.metadata
                     and chunk.metadata.get("success", False)
                 ):
-                    # Only return the structured output
+                    # 只返回结构化输出
                     return chunk.metadata.get("structured_output")
 
             return None
 
         finally:
-            # Record the tool result message in the memory
+            # 在记忆中记录工具结果消息
             await self.memory.add(tool_res_msg)
 
     async def observe(self, msg: Msg | list[Msg] | None) -> None:
-        """Receive observing message(s) without generating a reply.
+        """接收观察消息而不生成回复
 
         Args:
             msg (`Msg | list[Msg] | None`):
-                The message or messages to be observed.
+                要观察的一条或多条消息
         """
         await self.memory.add(msg)
 
     async def _summarizing(self) -> Msg:
-        """Generate a response when the agent fails to solve the problem in
-        the maximum iterations."""
+        """当 agent 在最大迭代次数内未能解决问题时生成响应"""
 
         hint_msg = Msg(
             "user",
-            "You have failed to generate response within the maximum "
-            "iterations. Now respond directly by summarizing the current "
-            "situation.",
+            "你未能在最大迭代次数内生成响应。现在通过总结当前情况直接回复。",
             role="user",
         )
 
-        # Generate a reply by summarizing the current situation
+        # 通过总结当前情况生成回复
         prompt = await self.formatter.format(
             [
                 Msg("system", self.sys_prompt, "system"),
@@ -745,11 +712,10 @@ class ReActAgent(ReActAgentBase):
                 hint_msg,
             ],
         )
-        # TODO: handle the structured output here, maybe force calling the
-        #  finish_function here
+        # TODO: 在这里处理结构化输出，也许在这里强制调用 finish_function
         res = await self.model(prompt)
 
-        # TTS model context manager
+        # TTS 模型上下文管理器
         tts_context = self.tts_model or _AsyncNullContext()
         speech: AudioBlock | list[AudioBlock] | None = None
 
@@ -759,11 +725,11 @@ class ReActAgent(ReActAgentBase):
                 async for chunk in res:
                     res_msg.content = chunk.content
 
-                    # The speech generated from multimodal (audio) models
-                    # e.g. Qwen-Omni and GPT-AUDIO
+                    # 从多模态（音频）模型生成的语音
+                    # 例如 Qwen-Omni 和 GPT-AUDIO
                     speech = res_msg.get_content_blocks("audio") or None
 
-                    # Push to TTS model if available
+                    # 如果可用，推送到 TTS 模型
                     if (
                         self.tts_model
                         and self.tts_model.supports_streaming_input
@@ -777,8 +743,7 @@ class ReActAgent(ReActAgentBase):
                 res_msg.content = res.content
 
             if self.tts_model:
-                # Push to TTS model and block to receive the full speech
-                # synthesis result
+                # 推送到 TTS 模型并阻塞以接收完整的语音合成结果
                 tts_res = await self.tts_model.synthesize(res_msg)
                 if self.tts_model.stream:
                     async for tts_chunk in tts_res:
@@ -797,23 +762,21 @@ class ReActAgent(ReActAgentBase):
         msg: Msg | list[Msg] | None = None,
         structured_model: Type[BaseModel] | None = None,
     ) -> Msg:
-        """The post-processing logic when the reply is interrupted by the
-        user or something else.
+        """当回复被用户或其他因素中断时的后处理逻辑
 
         Args:
             msg (`Msg | list[Msg] | None`, optional):
-                The input message(s) to the agent.
+                输入给 agent 的消息
             structured_model (`Type[BaseModel] | None`, optional):
-                The required structured output model.
+                所需的结构化输出模型
         """
 
         response_msg = Msg(
             self.name,
-            "I noticed that you have interrupted me. What can I "
-            "do for you?",
+            "我注意到你打断了我。我能为你做什么？",
             "assistant",
             metadata={
-                # Expose this field to indicate the interruption
+                # 暴露此字段以指示中断
                 "_is_interrupted": True,
             },
         )
@@ -827,15 +790,14 @@ class ReActAgent(ReActAgentBase):
         **kwargs: Any,
     ) -> ToolResponse:
         """
-        Generate required structured output by this function and return it
+        通过此函数生成所需的结构化输出并返回
         """
 
         structured_output = None
-        # Prepare structured output
+        # 准备结构化输出
         if self._required_structured_model:
             try:
-                # Use the metadata field of the message to store the
-                # structured output
+                # 使用消息的 metadata 字段存储结构化输出
                 structured_output = (
                     self._required_structured_model.model_validate(
                         kwargs,
@@ -847,7 +809,7 @@ class ReActAgent(ReActAgentBase):
                     content=[
                         TextBlock(
                             type="text",
-                            text=f"Arguments Validation Error: {e}",
+                            text=f"参数验证错误: {e}",
                         ),
                     ],
                     metadata={
@@ -857,15 +819,14 @@ class ReActAgent(ReActAgentBase):
                 )
         else:
             logger.warning(
-                "The generate_response function is called when no structured "
-                "output model is required.",
+                "在不需要结构化输出模型时调用了 generate_response 函数",
             )
 
         return ToolResponse(
             content=[
                 TextBlock(
                     type="text",
-                    text="Successfully generated response.",
+                    text="成功生成响应",
                 ),
             ],
             metadata={
@@ -879,22 +840,20 @@ class ReActAgent(ReActAgentBase):
         self,
         msg: Msg | list[Msg] | None,
     ) -> None:
-        """Insert the retrieved information from the long-term memory into
-        the short-term memory as a Msg object.
+        """将从长期记忆中检索到的信息作为 Msg 对象插入短期记忆
 
         Args:
             msg (`Msg | list[Msg] | None`):
-                The input message to the agent.
+                输入给 agent 的消息
         """
         if self._static_control and msg:
-            # Retrieve information from the long-term memory if available
+            # 如果可用，从长期记忆中检索信息
             retrieved_info = await self.long_term_memory.retrieve(msg)
             if retrieved_info:
                 retrieved_msg = Msg(
                     name="long_term_memory",
-                    content="<long_term_memory>The content below are "
-                    "retrieved from long-term memory, which maybe "
-                    f"useful:\n{retrieved_info}</long_term_memory>",
+                    content="<long_term_memory>以下内容从长期记忆中检索，"
+                    f"可能有用:\n{retrieved_info}</long_term_memory>",
                     role="user",
                 )
                 if self.print_hint_msg:
@@ -905,15 +864,14 @@ class ReActAgent(ReActAgentBase):
         self,
         msg: Msg | list[Msg] | None,
     ) -> None:
-        """Insert the retrieved documents from the RAG knowledge base(s) if
-        available.
+        """如果可用，从 RAG 知识库中插入检索到的文档
 
         Args:
             msg (`Msg | list[Msg] | None`):
-                The input message to the agent.
+                输入给 agent 的消息
         """
         if self.knowledge and msg:
-            # Prepare the user input query
+            # 准备用户输入查询
             query = None
             if isinstance(msg, Msg):
                 query = msg.get_text_content()
@@ -925,11 +883,11 @@ class ReActAgent(ReActAgentBase):
                         texts.append(text)
                 query = "\n".join(texts)
 
-            # Skip if the query is empty
+            # 如果查询为空则跳过
             if not query:
                 return
 
-            # Rewrite the query by the LLM if enabled
+            # 如果启用，由 LLM 重写查询
             if self.enable_rewrite_query:
                 stream_tmp = self.model.stream
                 try:
@@ -944,12 +902,10 @@ class ReActAgent(ReActAgentBase):
                             ),
                             Msg(
                                 "user",
-                                "<system-hint>Now you need to rewrite "
-                                "the above user query to be more specific and "
-                                "concise for knowledge retrieval. For "
-                                "example, rewrite the query 'what happened "
-                                "last day' to 'what happened on 2023-10-01' "
-                                "(assuming today is 2023-10-02)."
+                                "<system-hint>现在你需要重写上述用户查询，"
+                                "使其更具体和简洁，以便知识检索。"
+                                "例如，将查询 'what happened last day' 重写为 "
+                                "'what happened on 2023-10-01'（假设今天是 2023-10-02）。"
                                 "</system-hint>",
                                 "user",
                             ),
@@ -965,7 +921,7 @@ class ReActAgent(ReActAgentBase):
 
                 except Exception as e:
                     logger.warning(
-                        "Skipping the query rewriting due to error: %s",
+                        "由于错误跳过查询重写: %s",
                         str(e),
                     )
                 finally:
@@ -973,27 +929,26 @@ class ReActAgent(ReActAgentBase):
 
             docs: list[Document] = []
             for kb in self.knowledge:
-                # retrieve the user input query
+                # 检索用户输入查询
                 docs.extend(
                     await kb.retrieve(query=query),
                 )
             if docs:
-                # Rerank by the relevance score
+                # 按相关性得分重新排序
                 docs = sorted(
                     docs,
                     key=lambda doc: doc.score or 0.0,
                     reverse=True,
                 )
-                # Prepare the retrieved knowledge string
+                # 准备检索到的知识字符串
                 retrieved_msg = Msg(
                     name="user",
                     content=[
                         TextBlock(
                             type="text",
                             text=(
-                                "<retrieved_knowledge>Use the following "
-                                "content from the knowledge base(s) if it's "
-                                "helpful:\n"
+                                "<retrieved_knowledge>如果有帮助，"
+                                "请使用知识库中的以下内容:\n"
                             ),
                         ),
                         *[_.metadata.content for _ in docs],
